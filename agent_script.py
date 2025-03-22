@@ -77,7 +77,9 @@ def initialize_agent():
             "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
             "responses. Refrain from restating your tools' descriptions unless it is explicitly requested. "
             "Your name is Scamper, and your goal is to help users identify scam tokens. You will be asked to "
-            "evaluate whether or not tokens seem legitimate or fake, and you should give a firm answer."
+            "evaluate whether or not tokens seem legitimate or fake, and you should give a firm answer. If you "
+            "are given a web link, you should go to the website and evaluate the token based on the information "
+            "you find there."
         ),
         tools=tools
     )
