@@ -19,6 +19,9 @@ from coinbase_agentkit import (
 from coinbase_agentkit_openai_agents_sdk import get_openai_agents_sdk_tools
 from agents.agent import Agent
 from agents.run import Runner
+from agents import WebSearchTool
+# from agents import FileSearchTool
+# from agents import ComputerTool
 
 load_dotenv()
 
@@ -56,8 +59,7 @@ def initialize_agent():
 
     # Add openAI tools
     tools = get_openai_agents_sdk_tools(agentkit)
-
-    # from agents import FileSearchTool, ComputerTool
+    tools.append(WebSearchTool())
     # tools.append(FileSearchTool())
     # tools.append(ComputerTool())
 

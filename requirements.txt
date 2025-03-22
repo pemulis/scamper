@@ -14,5 +14,5 @@ pydantic
 coinbase_agentkit
 coinbase_agentkit_openai_agents_sdk
 
-# The OpenAI Agents SDK
-openai-agents
+# Pin openai version
+openai==1.66.0
