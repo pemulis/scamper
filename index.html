@@ -23,7 +23,7 @@
     .user {
       font-weight: bold;
       color: blue;
-      white-space: pre-wrap;  /* preserve user newlines if you like */
+      white-space: pre-wrap;
     }
     .agent {
       font-weight: bold;
@@ -39,16 +39,21 @@
     <button onclick="sendMessage()">Send</button>
   </div>
 
-  <!-- 1. Add Marked + DOMPurify via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
   <script>
+    // Global variable to track the conversation history
+    let chatHistory = [];
+
     async function sendMessage() {
       const userInput = document.getElementById('userInput').value;
       if (!userInput) return;
 
-      // Display user message (plain text)
+      // Add user message to chat history
+      chatHistory.push({ role: "user", content: userInput });
+
+      // Display user message
       const messagesDiv = document.getElementById('messages');
       const userMessage = document.createElement('div');
       userMessage.className = 'message user';
@@ -60,25 +65,32 @@
       document.getElementById('userInput').value = '';
 
       try {
-        // Post to FastAPI /chat endpoint
+        // Send prompt along with full conversation history to the /chat endpoint
         const resp = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: userInput })
+          body: JSON.stringify({ prompt: userInput, history: chatHistory })
         });
         const data = await resp.json();
 
-        // 2. Convert the AI’s Markdown response to HTML and sanitize
-        const rawHTML = marked.parse(data.response);         // Convert Markdown -> HTML
-        const safeHTML = DOMPurify.sanitize(rawHTML);        // Sanitize HTML
+        // If the backend returns an updated history, replace the current one
+        if (data.history) {
+          chatHistory = data.history;
+        } else {
+          // Otherwise, optionally add the agent response to the history
+          chatHistory.push({ role: "agent", content: data.response });
+        }
 
-        // 3. Display the safe HTML in the agent message
+        // Convert Markdown to HTML and sanitize it
+        const rawHTML = marked.parse(data.response);
+        const safeHTML = DOMPurify.sanitize(rawHTML);
+
+        // Display agent response
         const agentMessage = document.createElement('div');
         agentMessage.className = 'message agent';
-        agentMessage.innerHTML = `<strong>Agent:</strong><br>${safeHTML}`; 
+        agentMessage.innerHTML = `<strong>Agent:</strong><br>${safeHTML}`;
         messagesDiv.appendChild(agentMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
       } catch (error) {
         console.error(error);
         const errorMessage = document.createElement('div');

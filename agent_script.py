@@ -1,7 +1,6 @@
 # agent_script.py
 import json
 import os
-
 import asyncio
 from dotenv import load_dotenv
 from coinbase_agentkit import (
@@ -52,12 +51,12 @@ def initialize_agent():
         )
     )
 
-    # Make sure to re-export wallet in case it changed
+    # Re-export wallet data in case it changed
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
     with open(WALLET_DATA_FILE, "w") as f:
         f.write(wallet_data_json)
 
-    # Add openAI tools
+    # Add OpenAI tools
     tools = get_openai_agents_sdk_tools(agentkit)
     tools.append(WebSearchTool())
     # tools.append(FileSearchTool())
@@ -86,7 +85,18 @@ def initialize_agent():
 
     return agent
 
-async def run_chat(agent, user_input: str):
-    """Utility to run the agent in 'chat' mode for a single user input."""
-    output = await Runner.run(agent, user_input)
-    return output.final_output
+async def run_chat(agent, user_input: str, history: list = None):
+    """
+    Run the agent with the given user input and optional conversation history.
+    If a history list is provided, append the new user message to it before running the agent.
+    """
+    if history and isinstance(history, list) and len(history) > 0:
+        # Append the new message to the existing conversation history.
+        inputs = history + [{"role": "user", "content": user_input}]
+    else:
+        # If no history exists, use the prompt as the input.
+        inputs = user_input
+
+    # Run the agent with the provided input(s)
+    output = await Runner.run(agent, inputs)
+    return output
