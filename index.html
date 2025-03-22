@@ -51,10 +51,6 @@
       if (!userInput) return;
 
       console.log("User input:", userInput);
-      
-      // Add user message to chat history
-      chatHistory.push({ role: "user", content: userInput });
-      console.log("Chat history after user input:", chatHistory);
 
       // Display user message
       const messagesDiv = document.getElementById('messages');
@@ -89,7 +85,7 @@
           console.log("Chat history updated from server:", chatHistory);
         } else {
           // Otherwise, append the agent response to the history
-          chatHistory.push({ role: "agent", content: data.response });
+          chatHistory.push({ role: "assistant", content: data.response });
           console.log("Chat history after appending agent response:", chatHistory);
         }
 

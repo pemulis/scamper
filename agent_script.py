@@ -90,12 +90,11 @@ async def run_chat(agent, user_input: str, history: list = None):
     Run the agent with the given user input and optional conversation history.
     If a history list is provided, append the new user message to it before running the agent.
     """
-    if history and isinstance(history, list) and len(history) > 0:
-        # Append the new message to the existing conversation history.
+    if history:
+        # If we already have some messages, just append the new user message
         inputs = history + [{"role": "user", "content": user_input}]
     else:
-        # If no history exists, use the prompt as the input.
-        inputs = user_input
+        inputs = [{"role": "user", "content": user_input}]
 
     # Run the agent with the provided input(s)
     output = await Runner.run(agent, inputs)
