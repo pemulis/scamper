@@ -105,7 +105,7 @@ async def multi_agent_research(user_prompt: str) -> str:
     is asking about a token or needs advanced parallel research.
 
     This function:
-    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 5).
+    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 3).
        The coordinator responds with either a subtopic name or 'DONE'.
     2) For each subtopic, we spawn a "Researcher" agent to investigate it.
     3) We collect all researcher reports, then feed them back to the Coordinator
@@ -134,8 +134,8 @@ async def multi_agent_research(user_prompt: str) -> str:
     # We'll store (subtopic, researcher_result) pairs to feed back later
     subtopic_research_results = []
 
-    # 2) Loop up to 5 subtopics
-    for i in range(1, 6):
+    # 2) Loop up to 3 subtopics
+    for i in range(1, 4):
         print(f"[DEBUG] Requesting subtopic #{i} from Coordinator...")
         with trace(f"Coordinator: Subtopic #{i}"):
             subtopic_result = await Runner.run(coordinator, conversation)
@@ -212,7 +212,7 @@ async def multi_agent_research(user_prompt: str) -> str:
     is asking about a token or needs advanced parallel research.
 
     This function:
-    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 5).
+    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 3).
        The coordinator responds with either a subtopic name or 'DONE'.
     2) For each subtopic, we spawn a "Researcher" agent to investigate it.
     3) We collect all researcher reports, then feed them back to the Coordinator
@@ -238,8 +238,8 @@ async def multi_agent_research(user_prompt: str) -> str:
     # We'll store (subtopic, researcher_result) pairs to feed back later
     subtopic_research_results = []
 
-    # 2) Loop up to 5 subtopics
-    for i in range(1, 6):
+    # 2) Loop up to 3 subtopics
+    for i in range(1, 4):
         with trace(f"Coordinator: Subtopic #{i}"):
             subtopic_result = await Runner.run(coordinator, conversation)
 
