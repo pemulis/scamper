@@ -20,8 +20,16 @@
     .message {
       margin-bottom: 10px;
     }
-    .user { font-weight: bold; color: blue; }
-    .agent { font-weight: bold; color: green; }
+    .user {
+      font-weight: bold;
+      color: blue;
+      white-space: pre-wrap;  /* preserve user newlines if you like */
+    }
+    .agent {
+      font-weight: bold;
+      color: green;
+      white-space: pre-wrap;  /* preserve agent newlines if you like */
+    }
   </style>
 </head>
 <body>
@@ -32,12 +40,16 @@
     <button onclick="sendMessage()">Send</button>
   </div>
 
+  <!-- 1. Add Marked + DOMPurify via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
   <script>
     async function sendMessage() {
       const userInput = document.getElementById('userInput').value;
       if (!userInput) return;
 
-      // Display user message
+      // Display user message (plain text)
       const messagesDiv = document.getElementById('messages');
       const userMessage = document.createElement('div');
       userMessage.className = 'message user';
@@ -56,10 +68,15 @@
           body: JSON.stringify({ prompt: userInput })
         });
         const data = await resp.json();
-        // Display agent response
+
+        // 2. Convert the AI’s Markdown response to HTML and sanitize
+        const rawHTML = marked.parse(data.response);         // Convert Markdown -> HTML
+        const safeHTML = DOMPurify.sanitize(rawHTML);        // Sanitize HTML
+
+        // 3. Display the safe HTML in the agent message
         const agentMessage = document.createElement('div');
         agentMessage.className = 'message agent';
-        agentMessage.textContent = `Agent: ${data.response}`;
+        agentMessage.innerHTML = `<strong>Agent:</strong><br>${safeHTML}`; 
         messagesDiv.appendChild(agentMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
@@ -67,7 +84,7 @@
         console.error(error);
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message agent';
-        errorMessage.textContent = `Agent: [Error occurred, check console]`;
+        errorMessage.textContent = 'Agent: [Error occurred, check console]';
         messagesDiv.appendChild(errorMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       }
