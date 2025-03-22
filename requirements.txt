@@ -1,0 +1,18 @@
+# requirements.txt
+
+# FastAPI + Uvicorn for webserver
+fastapi
+uvicorn
+
+# For environment variables
+python-dotenv
+
+# For request body parsing (used internally by FastAPI, but good to list explicitly)
+pydantic
+
+# Coinbase AgentKit libraries
+coinbase_agentkit
+coinbase_agentkit_openai_agents_sdk
+
+# The OpenAI Python library (often needed if you’re using OpenAI-based tools)
+openai
