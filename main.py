@@ -3,8 +3,12 @@ import asyncio
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from agent_script import initialize_agent, run_chat
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Initialize the agent once at server startup
 agent = initialize_agent()
@@ -23,7 +27,8 @@ async def chat_endpoint(request: ChatRequest):
     response = await run_chat(agent, user_input)
     return {"response": response}
 
-# Example home route to check if server is running
-@app.get("/")
-def read_root():
-    return {"status": "OK", "message": "Welcome to the CDP Agent API!"}
+@app.get("/", response_class=HTMLResponse)
+def get_index():
+    with open("index.html", "r") as f:
+        html_content = f.read()
+    return html_content
