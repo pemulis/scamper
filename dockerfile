@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3.13 install --no-cache-dir -r requirements.txt
 
 # Copy the rest of your code
 COPY . /app
