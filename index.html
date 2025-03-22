@@ -50,8 +50,11 @@
       const userInput = document.getElementById('userInput').value;
       if (!userInput) return;
 
+      console.log("User input:", userInput);
+      
       // Add user message to chat history
       chatHistory.push({ role: "user", content: userInput });
+      console.log("Chat history after user input:", chatHistory);
 
       // Display user message
       const messagesDiv = document.getElementById('messages');
@@ -65,20 +68,29 @@
       document.getElementById('userInput').value = '';
 
       try {
-        // Send prompt along with full conversation history to the /chat endpoint
+        // Prepare payload with prompt and full conversation history
+        const payload = { prompt: userInput, history: chatHistory };
+        console.log("Payload being sent:", payload);
+
+        // Send prompt along with conversation history to the /chat endpoint
         const resp = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: userInput, history: chatHistory })
+          body: JSON.stringify(payload)
         });
+        console.log("HTTP response status:", resp.status);
+
         const data = await resp.json();
+        console.log("Response from server:", data);
 
         // If the backend returns an updated history, replace the current one
         if (data.history) {
           chatHistory = data.history;
+          console.log("Chat history updated from server:", chatHistory);
         } else {
-          // Otherwise, optionally add the agent response to the history
+          // Otherwise, append the agent response to the history
           chatHistory.push({ role: "agent", content: data.response });
+          console.log("Chat history after appending agent response:", chatHistory);
         }
 
         // Convert Markdown to HTML and sanitize it
@@ -92,7 +104,7 @@
         messagesDiv.appendChild(agentMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       } catch (error) {
-        console.error(error);
+        console.error("Error during fetch:", error);
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message agent';
         errorMessage.textContent = 'Agent: [Error occurred, check console]';
