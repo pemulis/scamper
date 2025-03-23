@@ -63,27 +63,33 @@ def create_agentkit():
 
 def create_coordinator_agent():
     """
-    The Coordinator produces one research subtopic at a time,
-    and later synthesizes the final summary.
+    The Coordinator produces one research subtopic (one to three sentences) at a time,
+    specifically instructing the researcher to do a web search for the ACX token or relevant details.
+    After producing up to five subtopics, it says 'DONE'.
+    Finally, it will incorporate the research findings into a single concise final answer.
     """
     return Agent(
         name="Coordinator",
         instructions=(
-            "You are the Coordinator. The user is asking about a token or some topic needing deeper research.\n\n"
-            "Your responsibilities:\n"
-            "1) Produce up to five subtopics, one at a time. If you have no more subtopics, say 'DONE'.\n"
-            "2) For each subtopic, you only need to respond with the subtopic name. The rest of your chain of thought "
-            "is hidden.\n"
-            "3) Later, you will receive the research results for each subtopic and produce a final, concise summary.\n"
-            "Do NOT reveal your chain-of-thought or any internal reasoning, just produce a single subtopic or 'DONE'."
+            "You are the Coordinator. The user is asking about a token or something needing deeper research.\n\n"
+            "Your job is:\n"
+            "1) Produce one subtopic at a time (up to 3). Each subtopic should be a short imperative instruction—"
+            "1 to 3 sentences—telling the researcher EXACTLY what to search for about the token. For example:\n"
+            "   - 'Search for the official token website and whitepaper, summarize any key details or disclaimers.'\n"
+            "   - 'Search for community sentiment around token on Twitter, Reddit, or forums, note any scam alerts.'\n"
+            "   - 'Search for any token listing on major exchanges or aggregator sites, see if it is recognized.'\n"
+            "2) If you have no more subtopics, respond with 'DONE'.\n"
+            "3) Later, you will receive the research results for each subtopic and produce a final, concise answer.\n\n"
+            "DO NOT reveal chain-of-thought. Produce ONLY either a subtopic instruction or 'DONE' each time."
         ),
         tools=[],
     )
 
 def create_researcher_agent(agentkit, researcher_name: str):
     """
-    Each researcher can have web search or other specialized tools to gather
-    data about a single subtopic. They return a short summary of findings.
+    Each researcher can have web search or other specialized tools
+    to gather data about a single subtopic. They must do a search
+    based on that subtopic instruction.
     """
     researcher_tools = get_openai_agents_sdk_tools(agentkit)
     researcher_tools.append(WebSearchTool())
@@ -91,9 +97,12 @@ def create_researcher_agent(agentkit, researcher_name: str):
     return Agent(
         name=researcher_name,
         instructions=(
-            f"You are {researcher_name}, a specialized researcher with web search capabilities.\n"
-            "Given a single subtopic, provide a concise summary of what you find. If you find nothing, say so.\n"
-            "Be very succinct. Do not reveal chain-of-thought."
+            f"You are {researcher_name}, a specialized researcher. "
+            "You MUST perform a web search for each subtopic you receive. "
+            "The subtopic will be a short imperative instruction. "
+            "Use the WebSearchTool and any relevant actions to find up-to-date info. "
+            "Then summarize your findings concisely. If you find nothing relevant, say so. "
+            "Do not reveal chain-of-thought. Return only your final summary."
         ),
         tools=researcher_tools,
     )
