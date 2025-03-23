@@ -29,16 +29,19 @@ load_dotenv()
 # File used to persist the agent's CDP API Wallet Data
 WALLET_DATA_FILE = "wallet_data.txt"
 
+
 def _load_wallet_data():
     if os.path.exists(WALLET_DATA_FILE):
         with open(WALLET_DATA_FILE) as f:
             return f.read()
     return None
 
+
 def _save_wallet_data(wallet_provider):
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
     with open(WALLET_DATA_FILE, "w") as f:
         f.write(wallet_data_json)
+
 
 def create_agentkit():
     wallet_data = _load_wallet_data()
@@ -51,7 +54,7 @@ def create_agentkit():
             action_providers=[
                 cdp_api_action_provider(),
                 cdp_wallet_action_provider(),
-                erc20_action_provider(),
+                erc20_action_provider,
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
@@ -61,9 +64,10 @@ def create_agentkit():
     _save_wallet_data(wallet_provider)
     return agentkit
 
+
 def create_coordinator_agent():
     """
-    The Coordinator produces one research subtopic (one to three sentences) at a time,
+    The Coordinator produces one research subtopic (1–3 sentences) at a time,
     specifically instructing the researcher to do a web search for the token or relevant details.
     After producing up to five subtopics, it says 'DONE'.
     Finally, it will incorporate the research findings into a single concise final answer.
@@ -73,7 +77,7 @@ def create_coordinator_agent():
         instructions=(
             "You are the Coordinator. The user is asking about a token or something needing deeper research.\n\n"
             "Your job is:\n"
-            "1) Produce one research subtopic prompt at a time (up to 3). Each subtopic should be a short imperative instruction—"
+            "1) Produce one research subtopic prompt at a time (up to 2). Each subtopic should be a short imperative instruction—"
             "1 to 3 sentences—telling the researcher what to research about the token.\n"
             "2) If you have no more subtopics, respond with 'DONE'.\n"
             "3) Later, you will receive the research results for each subtopic and produce a final, concise answer.\n\n"
@@ -81,6 +85,7 @@ def create_coordinator_agent():
         ),
         tools=[],
     )
+
 
 def create_researcher_agent(agentkit, researcher_name: str):
     """
@@ -104,6 +109,7 @@ def create_researcher_agent(agentkit, researcher_name: str):
         tools=researcher_tools,
     )
 
+
 @function_tool
 async def multi_agent_research(user_prompt: str) -> str:
     """
@@ -111,7 +117,7 @@ async def multi_agent_research(user_prompt: str) -> str:
     is asking about a token or needs advanced parallel research.
 
     This function:
-    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 3).
+    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 2).
        The coordinator responds with either a subtopic name or 'DONE'.
     2) For each subtopic, we spawn a "Researcher" agent to investigate it.
     3) We collect all researcher reports, then feed them back to the Coordinator
@@ -122,6 +128,7 @@ async def multi_agent_research(user_prompt: str) -> str:
         user_prompt: The text from the user describing the token
             (or any context that needs deeper parallel research).
     """
+
     print("[DEBUG] Starting multi_agent_research with user_prompt:")
     print("        ", user_prompt)
 
@@ -129,26 +136,23 @@ async def multi_agent_research(user_prompt: str) -> str:
     agentkit = create_agentkit()
     coordinator = create_coordinator_agent()
 
-    # We'll maintain a conversation list so the coordinator sees
-    # the user prompt and the results of each subtopic's research.
     # Start the conversation by telling the coordinator about the user's prompt,
     # and that we want to find the first subtopic.
     conversation = [
         {"role": "user", "content": f"{user_prompt}\n\nPlease produce the first subtopic."}
     ]
 
-    # We'll store (subtopic, researcher_result) pairs to feed back later
+    # We'll store (subtopic, researcher_result) pairs
     subtopic_research_results = []
 
-    # 2) Loop up to 3 subtopics
-    for i in range(1, 4):
+    # 2) Loop up to 2 subtopics
+    for i in range(1, 3):
         print(f"[DEBUG] Requesting subtopic #{i} from Coordinator...")
         with trace(f"Coordinator: Subtopic #{i}"):
             subtopic_result = await Runner.run(coordinator, conversation)
 
-        # The coordinator's entire message is presumably the subtopic (or 'DONE')
+        # The coordinator's entire message is presumably the subtopic or 'DONE'
         subtopic_text = subtopic_result.final_output.strip()
-
         print(f"[DEBUG] Coordinator returned subtopic #{i}: '{subtopic_text}'")
 
         # If coordinator says "DONE" or produces an empty answer, break
@@ -174,9 +178,7 @@ async def multi_agent_research(user_prompt: str) -> str:
         # Store the research result
         subtopic_research_results.append((subtopic_text, research_text))
 
-        # 2c) Add the subtopic and the research result to the coordinator's conversation,
-        # so it can incorporate that info before generating the next subtopic.
-        # Then we ask for the next subtopic.
+        # 2c) Add the subtopic and the research result to the coordinator's conversation
         new_messages = subtopic_result.to_input_list()  # the coordinator's prior role=assistant
         new_messages += [
             {
@@ -190,20 +192,19 @@ async def multi_agent_research(user_prompt: str) -> str:
         ]
         conversation = new_messages
 
-    # 3) Now we have all subtopics and their research. Time for a final summary.
+    # 3) Compile all subtopics and research
     compiled_text = "Here are the subtopics and their research:\n\n"
     for idx, (subtopic, research) in enumerate(subtopic_research_results, start=1):
         compiled_text += f"{idx}. {subtopic}\nResearch: {research}\n\n"
 
     print("[DEBUG] Compiled research so far:\n", compiled_text)
 
+    # 4) Final summary
     final_prompt = (
         f"The user prompt was:\n{user_prompt}\n\n"
         f"{compiled_text}\n"
         "Please combine these findings into one concise answer for the user."
     )
-
-    # We can take the last coordinator conversation and append this final request
     final_conversation = conversation + [{"role": "user", "content": final_prompt}]
 
     print("[DEBUG] Requesting final summary from Coordinator...")
@@ -211,98 +212,6 @@ async def multi_agent_research(user_prompt: str) -> str:
         final_result = await Runner.run(coordinator, final_conversation)
 
     print("[DEBUG] Final summary from Coordinator:\n", final_result.final_output)
-    return final_result.final_output
-
-    """
-    Perform deep multi-agent token research. Only use this tool if the user
-    is asking about a token or needs advanced parallel research.
-
-    This function:
-    1) Iteratively asks a Coordinator agent for one subtopic at a time (up to 3).
-       The coordinator responds with either a subtopic name or 'DONE'.
-    2) For each subtopic, we spawn a "Researcher" agent to investigate it.
-    3) We collect all researcher reports, then feed them back to the Coordinator
-       for a final, concise summary.
-    4) Returns that final summary text.
-
-    Args:
-        user_prompt: The text from the user describing the token
-            (or any context that needs deeper parallel research).
-    """
-    # 1) Initialize the Coordinator and the conversation context
-    agentkit = create_agentkit()
-    coordinator = create_coordinator_agent()
-
-    # We'll maintain a conversation list so the coordinator sees
-    # the user prompt and the results of each subtopic's research.
-    # Start the conversation by telling the coordinator about the user's prompt,
-    # and that we want to find the first subtopic.
-    conversation = [
-        {"role": "user", "content": f"{user_prompt}\n\nPlease produce the first subtopic."}
-    ]
-
-    # We'll store (subtopic, researcher_result) pairs to feed back later
-    subtopic_research_results = []
-
-    # 2) Loop up to 3 subtopics
-    for i in range(1, 4):
-        with trace(f"Coordinator: Subtopic #{i}"):
-            subtopic_result = await Runner.run(coordinator, conversation)
-
-        # The coordinator's entire message is presumably the subtopic (or 'DONE')
-        subtopic_text = subtopic_result.final_output.strip()
-
-        # If coordinator says "DONE" or produces an empty answer, break
-        if not subtopic_text or subtopic_text.upper() == "DONE":
-            break
-
-        # 2a) Create a researcher for this subtopic
-        researcher = create_researcher_agent(agentkit, f"Researcher_{i}")
-
-        # 2b) Ask the researcher about this subtopic
-        with trace(f"Researcher_{i} analyzing {subtopic_text[:40]}"):
-            researcher_output = await Runner.run(
-                researcher,
-                [{"role": "user", "content": subtopic_text}],
-            )
-
-        # Store the research result
-        subtopic_research_results.append((subtopic_text, researcher_output.final_output))
-
-        # 2c) Add the subtopic and the research result to the coordinator's conversation,
-        # so it can incorporate that info before generating the next subtopic.
-        # Then we ask for the next subtopic.
-        new_messages = subtopic_result.to_input_list()  # the coordinator's prior role=assistant
-        new_messages += [
-            {
-                "role": "user",
-                "content": (
-                    f"Subtopic '{subtopic_text}' is researched. Here is the result:\n\n"
-                    f"{researcher_output.final_output}\n\n"
-                    "Now produce the next subtopic. If none, say 'DONE'."
-                )
-            }
-        ]
-        conversation = new_messages
-
-    # 3) Now we have all subtopics and their research. Time for a final summary.
-    # We'll ask the coordinator to produce a single, concise summary.
-    compiled_text = "Here are the subtopics and their research:\n\n"
-    for idx, (subtopic, research) in enumerate(subtopic_research_results, start=1):
-        compiled_text += f"{idx}. {subtopic}\nResearch: {research}\n\n"
-
-    final_prompt = (
-        f"The user prompt was:\n{user_prompt}\n\n"
-        f"{compiled_text}\n"
-        "Please combine these findings into one concise answer for the user."
-    )
-
-    # We can take the last coordinator conversation and append this final request
-    final_conversation = conversation + [{"role": "user", "content": final_prompt}]
-
-    with trace("Coordinator: Final Summary"):
-        final_result = await Runner.run(coordinator, final_conversation)
-
     return final_result.final_output
 
 
@@ -345,6 +254,7 @@ def initialize_agent():
     )
 
     return agent
+
 
 async def run_chat(agent: Agent, user_input: str, history: list = None):
     """
