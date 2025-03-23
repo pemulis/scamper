@@ -18,7 +18,7 @@ In addition, Scamper employs a **multi-agent research loop** when asked about a 
 4. **Coordinator** combines their reports into a concise final answer.  
 5. The final response is handed back to **Scamper**, who presents it to the user.  
 
-This mini‐ecosystem is a powerful demonstration of the **OpenAI Agents SDK** for building sophisticated multi-agent solutions with minimal boilerplate.
+This mini‐ecosystem is a powerful demonstration of the **OpenAI Agents SDK** for building sophisticated multi-agent solutions with minimal boilerplate. Scamper's integration with Coinbase AgentKit means these sophisticated multi-agent flows can be used to control onchain agentic applications.
 
 ---
 
