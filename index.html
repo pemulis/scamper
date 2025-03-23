@@ -170,7 +170,7 @@
       </div>
     </div>
     <div id="messages"></div>
-    <input type="text" id="userInput" placeholder="Type your message here..."/>
+    <input type="text" id="userInput" placeholder="Type your message here..." onkeydown="handleKeydown(event)"/>
     <button onclick="sendMessage()">Send</button>
   </div>
 
@@ -186,6 +186,14 @@
       const now = new Date();
       // e.g. "15:42" in 24-hour format, or "3:42 PM" in some locales
       return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function handleKeydown(e) {
+      // Check if the key is Enter
+      if (e.key === 'Enter') {
+        e.preventDefault(); // prevent any default behavior (like form submit)
+        sendMessage();
+      }
     }
 
     async function sendMessage() {
