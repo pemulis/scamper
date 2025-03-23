@@ -73,11 +73,8 @@ def create_coordinator_agent():
         instructions=(
             "You are the Coordinator. The user is asking about a token or something needing deeper research.\n\n"
             "Your job is:\n"
-            "1) Produce one subtopic at a time (up to 3). Each subtopic should be a short imperative instruction—"
-            "1 to 3 sentences—telling the researcher EXACTLY what to search for about the token. For example:\n"
-            "   - 'Search for the official token website and whitepaper, summarize any key details or disclaimers.'\n"
-            "   - 'Search for community sentiment around token on Twitter, Reddit, or forums, note any scam alerts.'\n"
-            "   - 'Search for any token listing on major exchanges or aggregator sites, see if it is recognized.'\n"
+            "1) Produce one research subtopic prompt at a time (up to 3). Each subtopic should be a short imperative instruction—"
+            "1 to 3 sentences—telling the researcher what to research about the token.\n"
             "2) If you have no more subtopics, respond with 'DONE'.\n"
             "3) Later, you will receive the research results for each subtopic and produce a final, concise answer.\n\n"
             "DO NOT reveal chain-of-thought. Produce ONLY either a subtopic instruction or 'DONE' each time."
