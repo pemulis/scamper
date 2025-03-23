@@ -100,6 +100,8 @@ def create_researcher_agent(agentkit, researcher_name: str):
             "Use the WebSearchTool and any relevant actions to find up-to-date info. "
             "Then summarize your findings concisely. If you find nothing relevant, say so. "
             "Do not reveal chain-of-thought. Return only your final summary."
+            "Do not take sources at face value, since there is false information on the Internet."
+            "Be cautious and cross-reference information."
         ),
         tools=researcher_tools,
     )
