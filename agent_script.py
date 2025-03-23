@@ -341,7 +341,7 @@ def initialize_agent():
             "evaluate whether tokens seem legitimate or fake, and you should give a firm answer. If you are given "
             "a web link, you should go to the website and evaluate the token based on the information you find "
             "there.\n\n"
-            "If you suspect the user is asking about a token or complex research is needed, call the "
+            "If you suspect the user is asking about a token or any other cryptocurrency, or complex research is needed, call the "
             "'multi_agent_research' tool with the entire user prompt. Then incorporate the returned results."
         ),
         tools=all_tools
