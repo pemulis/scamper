@@ -8,7 +8,7 @@ username: judge
 
 password: ethglobal
 
-Scamper is an AI agent whose goal is to **identify scam tokens** and **protect crypto investors**. It’s built with a framework that closely integrates [Coinbase AgentKit][coinbase-agentkit] and the [OpenAI Agents SDK][openai-agents-sdk], providing out-of-the-box **web search**, **thread history**, and a **web API + frontend interface**.
+Scamper is an AI agent whose goal is to **identify scam tokens** and **protect crypto investors**. It’s built with a framework that closely integrates Coinbase AgentKit and the OpenAI Agents SDK][openai-agents-sdk, providing out-of-the-box **web search**, **thread history**, and a **web API + frontend interface**.
 
 In addition, Scamper employs a **multi-agent research loop** when asked about a token. Here’s how it works:
 
