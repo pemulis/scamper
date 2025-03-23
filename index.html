@@ -3,31 +3,86 @@
 <head>
   <title>Scamper Agent</title>
   <style>
-    body { font-family: Arial, sans-serif; }
+    /* Use a system fallback if "SF Pro Text" is not available; 
+       you can also self-host or import it if you have the font files. */
+    @font-face {
+      font-family: "SF Pro Text";
+      src: local("SF Pro Text"), local("San Francisco"), local("Arial"), local("sans-serif");
+    }
+
+    body {
+      font-family: "SF Pro Text", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
     #chat-container {
       width: 50%;
       margin: auto;
       margin-top: 50px;
       border: 1px solid #ccc;
       padding: 20px;
+      background-color: #fff;
     }
+
     #messages {
       border: 1px solid #eee;
       height: 70vh;
       overflow-y: scroll;
       padding: 10px;
+      background-color: #fff;
     }
+
+    /* Base styling for all messages */
     .message {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 60%;
+      padding: 12px 18px 6px 18px;
+      font-family: "SF Pro Text", Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: normal;
+      color: rgba(0,0,0,0.85);
       margin-bottom: 10px;
-    }
-    .user {
-      font-weight: bold;
-      color: blue;
       white-space: pre-wrap;
     }
-    .agent {
-      font-weight: bold;
-      color: green;
+
+    /* User messages: right-aligned bubble (light gray) */
+    .message.user {
+      margin-left: auto; /* push bubble to the right */
+      border-radius: 16px 16px 0px 16px;
+      background: rgba(244, 244, 247, 0.80);
+      text-align: right;
+    }
+
+    /* Agent messages: left-aligned bubble (orange gradient) */
+    .message.agent {
+      margin-right: auto; /* push bubble to the left */
+      border-radius: 0px 16px 16px 16px;
+      background: linear-gradient(
+        264deg,
+        rgba(255, 127, 80, 0.80) 37.63%,
+        #c23b22 60.45%
+      );
+      text-align: left;
+    }
+
+    /* The input box and send button */
+    #userInput {
+      width: 80%;
+      margin-right: 8px;
+      font-family: "SF Pro Text", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    button {
+      font-family: "SF Pro Text", Arial, sans-serif;
+      font-size: 14px;
+      padding: 6px 12px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -35,7 +90,7 @@
   <div id="chat-container">
     <h2>Scamper Agent Chat</h2>
     <div id="messages"></div>
-    <input type="text" id="userInput" placeholder="Type your message..." style="width: 80%;"/>
+    <input type="text" id="userInput" placeholder="Type your message..."/>
     <button onclick="sendMessage()">Send</button>
   </div>
 
@@ -56,7 +111,8 @@
       const messagesDiv = document.getElementById('messages');
       const userMessage = document.createElement('div');
       userMessage.className = 'message user';
-      userMessage.textContent = `User: ${userInput}`;
+      // We won't prefix "User: " to keep design clean, but you can add it if you want
+      userMessage.textContent = userInput;
       messagesDiv.appendChild(userMessage);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
@@ -96,14 +152,16 @@
         // Display agent response
         const agentMessage = document.createElement('div');
         agentMessage.className = 'message agent';
-        agentMessage.innerHTML = `<strong>Agent:</strong><br>${safeHTML}`;
+        agentMessage.innerHTML = safeHTML; 
+        // (Remove <strong>Agent:</strong> to keep design bubble clean)
+
         messagesDiv.appendChild(agentMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       } catch (error) {
         console.error("Error during fetch:", error);
         const errorMessage = document.createElement('div');
         errorMessage.className = 'message agent';
-        errorMessage.textContent = 'Agent: [Error occurred, check console]';
+        errorMessage.textContent = '[Error occurred, check console]';
         messagesDiv.appendChild(errorMessage);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       }
