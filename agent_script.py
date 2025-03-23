@@ -29,19 +29,16 @@ load_dotenv()
 # File used to persist the agent's CDP API Wallet Data
 WALLET_DATA_FILE = "wallet_data.txt"
 
-
 def _load_wallet_data():
     if os.path.exists(WALLET_DATA_FILE):
         with open(WALLET_DATA_FILE) as f:
             return f.read()
     return None
 
-
 def _save_wallet_data(wallet_provider):
     wallet_data_json = json.dumps(wallet_provider.export_wallet().to_dict())
     with open(WALLET_DATA_FILE, "w") as f:
         f.write(wallet_data_json)
-
 
 def create_agentkit():
     wallet_data = _load_wallet_data()
@@ -54,7 +51,7 @@ def create_agentkit():
             action_providers=[
                 cdp_api_action_provider(),
                 cdp_wallet_action_provider(),
-                erc20_action_provider,
+                erc20_action_provider(),
                 pyth_action_provider(),
                 wallet_action_provider(),
                 weth_action_provider(),
@@ -64,10 +61,9 @@ def create_agentkit():
     _save_wallet_data(wallet_provider)
     return agentkit
 
-
 def create_coordinator_agent():
     """
-    The Coordinator produces one research subtopic (1–3 sentences) at a time,
+    The Coordinator produces one research subtopic (one to three sentences) at a time,
     specifically instructing the researcher to do a web search for the token or relevant details.
     After producing up to five subtopics, it says 'DONE'.
     Finally, it will incorporate the research findings into a single concise final answer.
@@ -85,7 +81,6 @@ def create_coordinator_agent():
         ),
         tools=[],
     )
-
 
 def create_researcher_agent(agentkit, researcher_name: str):
     """
@@ -109,7 +104,6 @@ def create_researcher_agent(agentkit, researcher_name: str):
         tools=researcher_tools,
     )
 
-
 @function_tool
 async def multi_agent_research(user_prompt: str) -> str:
     """
@@ -128,7 +122,6 @@ async def multi_agent_research(user_prompt: str) -> str:
         user_prompt: The text from the user describing the token
             (or any context that needs deeper parallel research).
     """
-
     print("[DEBUG] Starting multi_agent_research with user_prompt:")
     print("        ", user_prompt)
 
@@ -136,13 +129,15 @@ async def multi_agent_research(user_prompt: str) -> str:
     agentkit = create_agentkit()
     coordinator = create_coordinator_agent()
 
+    # We'll maintain a conversation list so the coordinator sees
+    # the user prompt and the results of each subtopic's research.
     # Start the conversation by telling the coordinator about the user's prompt,
     # and that we want to find the first subtopic.
     conversation = [
         {"role": "user", "content": f"{user_prompt}\n\nPlease produce the first subtopic."}
     ]
 
-    # We'll store (subtopic, researcher_result) pairs
+    # We'll store (subtopic, researcher_result) pairs to feed back later
     subtopic_research_results = []
 
     # 2) Loop up to 2 subtopics
@@ -151,8 +146,9 @@ async def multi_agent_research(user_prompt: str) -> str:
         with trace(f"Coordinator: Subtopic #{i}"):
             subtopic_result = await Runner.run(coordinator, conversation)
 
-        # The coordinator's entire message is presumably the subtopic or 'DONE'
+        # The coordinator's entire message is presumably the subtopic (or 'DONE')
         subtopic_text = subtopic_result.final_output.strip()
+
         print(f"[DEBUG] Coordinator returned subtopic #{i}: '{subtopic_text}'")
 
         # If coordinator says "DONE" or produces an empty answer, break
@@ -178,7 +174,9 @@ async def multi_agent_research(user_prompt: str) -> str:
         # Store the research result
         subtopic_research_results.append((subtopic_text, research_text))
 
-        # 2c) Add the subtopic and the research result to the coordinator's conversation
+        # 2c) Add the subtopic and the research result to the coordinator's conversation,
+        # so it can incorporate that info before generating the next subtopic.
+        # Then we ask for the next subtopic.
         new_messages = subtopic_result.to_input_list()  # the coordinator's prior role=assistant
         new_messages += [
             {
@@ -192,19 +190,20 @@ async def multi_agent_research(user_prompt: str) -> str:
         ]
         conversation = new_messages
 
-    # 3) Compile all subtopics and research
+    # 3) Now we have all subtopics and their research. Time for a final summary.
     compiled_text = "Here are the subtopics and their research:\n\n"
     for idx, (subtopic, research) in enumerate(subtopic_research_results, start=1):
         compiled_text += f"{idx}. {subtopic}\nResearch: {research}\n\n"
 
     print("[DEBUG] Compiled research so far:\n", compiled_text)
 
-    # 4) Final summary
     final_prompt = (
         f"The user prompt was:\n{user_prompt}\n\n"
         f"{compiled_text}\n"
         "Please combine these findings into one concise answer for the user."
     )
+
+    # We can take the last coordinator conversation and append this final request
     final_conversation = conversation + [{"role": "user", "content": final_prompt}]
 
     print("[DEBUG] Requesting final summary from Coordinator...")
@@ -213,7 +212,6 @@ async def multi_agent_research(user_prompt: str) -> str:
 
     print("[DEBUG] Final summary from Coordinator:\n", final_result.final_output)
     return final_result.final_output
-
 
 def initialize_agent():
     """
@@ -254,7 +252,6 @@ def initialize_agent():
     )
 
     return agent
-
 
 async def run_chat(agent: Agent, user_input: str, history: list = None):
     """
