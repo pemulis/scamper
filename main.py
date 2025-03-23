@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from agent_script import initialize_agent, run_chat
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # For Basic Auth
 security = HTTPBasic()
