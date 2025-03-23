@@ -3,8 +3,10 @@
 ![Scamper, a cute but venomous Hispaniolan solenodon](scamper.png)
 
 **Live Demo**: [Scamper on Heroku](https://scamper-e1d5d599d982.herokuapp.com/)
-u: judge
-p: ethglobal
+
+username: judge
+
+password: ethglobal
 
 Scamper is an AI agent whose goal is to **identify scam tokens** and **protect crypto investors**. It’s built with a framework that closely integrates [Coinbase AgentKit][coinbase-agentkit] and the [OpenAI Agents SDK][openai-agents-sdk], providing out-of-the-box **web search**, **thread history**, and a **web API + frontend interface**.
 
