@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Scamper Agent</title>
+  <title>Scamper</title>
   <style>
     /* Use a system fallback if "SF Pro Text" is not available; 
        you can also self-host or import it if you have the font files. */
@@ -90,13 +90,71 @@
       padding: 6px 12px;
       cursor: pointer;
     }
+
+
+    #header-row {
+      display: grid;
+      /* Two columns: first for the icon, second for the text */
+      grid-template-columns: auto 1fr;
+      align-items: center;         /* vertically center icon & text */
+      gap: 12px;                   /* space between icon and text */
+      background-color: #fff;      /* white */
+      padding: 12px 16px;          /* some padding around content */
+      width: 100%;                 /* fill container width */
+    }
+
+    /* Container for the text stack (h2 + h3) */
+    #header-text {
+      display: flex;               /* so h2 & h3 stack neatly */
+      flex-direction: column;
+    }
+
+    #header-text h2 {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.85);
+      font-family: "SF Pro Display";
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 16px;
+    }
+
+    #header-text h3 {
+      margin: 4px 0 0 0;  /* small top margin to separate from h2 */
+      color: #27AE60;      /* "Green-2" */
+      font-family: "SF Pro Display";
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 16px;
+    }
+
+    input[type="text"] {
+      border-radius: 12px;
+      background: #FAFAFA;
+      height: 36px;
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(0, 0, 0, 0.45);
+      font-family: "SF Pro Display";
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+    }
   </style>
 </head>
 <body>
   <div id="chat-container">
-    <h2>Scamper Agent Chat</h2>
+    <div id="header-row">
+      <img src="/static/icon.png" alt="Scamper Icon" width="42"/>
+      <!-- Put h2 & h3 in their own flex container so they stack -->
+      <div id="header-text">
+        <h2>Scamper 🐾</h2>
+        <h3>Online</h3>
+      </div>
+    </div>
     <div id="messages"></div>
-    <input type="text" id="userInput" placeholder="Type your message..."/>
+    <input type="text" id="userInput" placeholder="Type your message here..."/>
     <button onclick="sendMessage()">Send</button>
   </div>
 
