@@ -126,46 +126,40 @@ async def multi_agent_research(user_prompt: str) -> str:
         user_prompt: The text from the user describing the token
             (or any context that needs deeper parallel research).
     """
-    print("[DEBUG] Starting multi_agent_research with user_prompt:")
-    print("        ", user_prompt)
+    # Using ANSI color codes for highlight:
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
 
-    # 1) Initialize the Coordinator and the conversation context
+    print(f"{GREEN}[DEBUG]{RESET} Starting multi_agent_research with user_prompt:")
+    print(f"        {CYAN}{user_prompt}{RESET}")
+
     agentkit = create_agentkit()
     coordinator = create_coordinator_agent()
 
-    # We'll maintain a conversation list so the coordinator sees
-    # the user prompt and the results of each subtopic's research.
-    # Start the conversation by telling the coordinator about the user's prompt,
-    # and that we want to find the first subtopic.
     conversation = [
         {"role": "user", "content": f"{user_prompt}\n\nPlease produce the first subtopic."}
     ]
-
-    # We'll store (subtopic, researcher_result) pairs to feed back later
     subtopic_research_results = []
 
-    # 2) Loop up to 2 subtopics
     for i in range(1, 3):
-        print(f"[DEBUG] Requesting subtopic #{i} from Coordinator...")
+        print(f"{GREEN}[DEBUG]{RESET} Requesting subtopic #{i} from Coordinator...")
         with trace(f"Coordinator: Subtopic #{i}"):
             subtopic_result = await Runner.run(coordinator, conversation)
 
-        # The coordinator's entire message is presumably the subtopic (or 'DONE')
         subtopic_text = subtopic_result.final_output.strip()
 
-        print(f"[DEBUG] Coordinator returned subtopic #{i}: '{subtopic_text}'")
+        print(f"{YELLOW}[DEBUG]{RESET} Coordinator returned subtopic #{i}: '{subtopic_text}'")
 
-        # If coordinator says "DONE" or produces an empty answer, break
         if not subtopic_text or subtopic_text.upper() == "DONE":
-            print("[DEBUG] Coordinator indicated we are done with subtopics.")
+            print(f"{GREEN}[DEBUG]{RESET} Coordinator indicated we are done with subtopics.")
             break
 
-        # 2a) Create a researcher for this subtopic
         researcher_name = f"Researcher_{i}"
-        print(f"[DEBUG] Creating {researcher_name} for subtopic '{subtopic_text}'")
+        print(f"{GREEN}[DEBUG]{RESET} Creating {researcher_name} for subtopic '{subtopic_text}'")
         researcher = create_researcher_agent(agentkit, researcher_name)
 
-        # 2b) Ask the researcher about this subtopic
         with trace(f"{researcher_name} analyzing {subtopic_text[:40]}"):
             researcher_output = await Runner.run(
                 researcher,
@@ -173,33 +167,26 @@ async def multi_agent_research(user_prompt: str) -> str:
             )
 
         research_text = researcher_output.final_output
-        print(f"[DEBUG] {researcher_name} returned:\n{research_text}\n")
+        print(f"{YELLOW}[DEBUG]{RESET} {researcher_name} returned:\n{CYAN}{research_text}{RESET}\n")
 
-        # Store the research result
         subtopic_research_results.append((subtopic_text, research_text))
 
-        # 2c) Add the subtopic and the research result to the coordinator's conversation,
-        # so it can incorporate that info before generating the next subtopic.
-        # Then we ask for the next subtopic.
-        new_messages = subtopic_result.to_input_list()  # the coordinator's prior role=assistant
-        new_messages += [
-            {
-                "role": "user",
-                "content": (
-                    f"Subtopic '{subtopic_text}' is researched. Here is the result:\n\n"
-                    f"{research_text}\n\n"
-                    "Now produce the next subtopic. If none, say 'DONE'."
-                )
-            }
-        ]
+        new_messages = subtopic_result.to_input_list()
+        new_messages.append({
+            "role": "user",
+            "content": (
+                f"Subtopic '{subtopic_text}' is researched. Here is the result:\n\n"
+                f"{research_text}\n\n"
+                "Now produce the next subtopic. If none, say 'DONE'."
+            )
+        })
         conversation = new_messages
 
-    # 3) Now we have all subtopics and their research. Time for a final summary.
     compiled_text = "Here are the subtopics and their research:\n\n"
     for idx, (subtopic, research) in enumerate(subtopic_research_results, start=1):
         compiled_text += f"{idx}. {subtopic}\nResearch: {research}\n\n"
 
-    print("[DEBUG] Compiled research so far:\n", compiled_text)
+    print(f"{GREEN}[DEBUG]{RESET} Compiled research so far:\n{CYAN}{compiled_text}{RESET}")
 
     final_prompt = (
         f"The user prompt was:\n{user_prompt}\n\n"
@@ -207,14 +194,13 @@ async def multi_agent_research(user_prompt: str) -> str:
         "Please combine these findings into one concise answer for the user."
     )
 
-    # We can take the last coordinator conversation and append this final request
     final_conversation = conversation + [{"role": "user", "content": final_prompt}]
 
-    print("[DEBUG] Requesting final summary from Coordinator...")
+    print(f"{GREEN}[DEBUG]{RESET} Requesting final summary from Coordinator...")
     with trace("Coordinator: Final Summary"):
         final_result = await Runner.run(coordinator, final_conversation)
 
-    print("[DEBUG] Final summary from Coordinator:\n", final_result.final_output)
+    print(f"{YELLOW}[DEBUG]{RESET} Final summary from Coordinator:\n{CYAN}{final_result.final_output}{RESET}")
     return final_result.final_output
 
 def initialize_agent():
@@ -223,15 +209,12 @@ def initialize_agent():
     - This agent can do onchain calls, web searches, etc.
     - It also has access to the 'multi_agent_research' tool for deeper analysis.
     """
-    # Basic onchain + OpenAI tools
     agentkit = create_agentkit()
     base_tools = get_openai_agents_sdk_tools(agentkit)
     base_tools.append(WebSearchTool())
 
-    # Our custom multi-agent tool
     all_tools = base_tools + [multi_agent_research]
 
-    # Scamper instructions
     agent = Agent(
         name="Scamper",
         instructions=(
@@ -257,16 +240,11 @@ def initialize_agent():
 
     return agent
 
-async def run_chat(agent: Agent, user_input: str, history: list = None):
-    """
-    Run the agent with the given user input and optional conversation history.
-    If a history list is provided, append the new user message to it before running the agent.
-    """
+async def run_chat(agent, user_input: str, history: list = None):
     if history:
         inputs = history + [{"role": "user", "content": user_input}]
     else:
         inputs = [{"role": "user", "content": user_input}]
 
-    # Run the agent with the provided input(s)
     output = await Runner.run(agent, inputs)
     return output
