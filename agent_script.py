@@ -64,7 +64,7 @@ def create_agentkit():
 def create_coordinator_agent():
     """
     The Coordinator produces one research subtopic (one to three sentences) at a time,
-    specifically instructing the researcher to do a web search for the ACX token or relevant details.
+    specifically instructing the researcher to do a web search for the token or relevant details.
     After producing up to five subtopics, it says 'DONE'.
     Finally, it will incorporate the research findings into a single concise final answer.
     """
