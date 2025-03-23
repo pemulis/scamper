@@ -102,6 +102,8 @@ def create_researcher_agent(agentkit, researcher_name: str):
             "Do not reveal chain-of-thought. Return only your final summary."
             "Do not take sources at face value, since there is false information on the Internet."
             "Be cautious and cross-reference information."
+            "Remember that many tokens and coins have similar names. Make sure you research the "
+            "specific token or coin you were asked about, not a coin with a similar name."
         ),
         tools=researcher_tools,
     )
